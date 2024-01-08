@@ -57,6 +57,13 @@ def parse_timeYmdhms(time_str):
 def parse_timeYmd(time_str):
     return datetime.strptime(time_str.strip(), '%Y-%m-%d')
 
+# 用于将字符串转换为浮点数的辅助函数
+def to_float(s):
+    try:
+        return float(s)
+    except ValueError:
+        return 0  # 或者你可以选择返回None或者其他合适的值
+
 # row = 1  # 从第二行开始写入数据
 
 def fetch_data(start_date, end_date, currency):
@@ -143,11 +150,11 @@ def fetch_data(start_date, end_date, currency):
 
                     # 将数据写入工作表
                     worksheet.write(row, 0, ''.join(m_n).strip())
-                    worksheet.write(row, 1, ''.join(s_e_p).strip())
-                    worksheet.write(row, 2, ''.join(c_p).strip())
-                    worksheet.write(row, 3, ''.join(s_e_sp).strip())
-                    worksheet.write(row, 4, ''.join(c_s).strip())
-                    worksheet.write(row, 5, ''.join(bank_count_p).strip())
+                    worksheet.write(row, 1, to_float(''.join(s_e_p).strip()))
+                    worksheet.write(row, 2, to_float(''.join(c_p).strip()))
+                    worksheet.write(row, 3, to_float(''.join(s_e_sp).strip()))
+                    worksheet.write(row, 4, to_float(''.join(c_s).strip()))
+                    worksheet.write(row, 5, to_float(''.join(bank_count_p).strip())) 
                     worksheet.write(row, 6, ''.join(date).strip())
                     
                     row += 1  # 只有写入数据后才递增行号
