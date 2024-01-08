@@ -1,4 +1,4 @@
-name: CurrencyScratch
+name: BuildCurrencyScratch
 
 on:
   push:
