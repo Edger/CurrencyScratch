@@ -48,6 +48,9 @@ jobs:
 
   release:
     needs: build
+    permissions:
+      contents: write
+      actions: read
     runs-on: ubuntu-latest
     steps:
       - name: Download Artifact
