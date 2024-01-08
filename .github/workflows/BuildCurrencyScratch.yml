@@ -137,5 +137,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./CurrencyScratch.exe
-          asset_name: CurrencyScratch-Windows
+          asset_name: CurrencyScratch-Windows.exe
           asset_content_type: application/octet-stream
