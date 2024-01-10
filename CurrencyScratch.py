@@ -282,14 +282,9 @@ def start_fetch():
     global is_fetching, fetch_thread
     is_fetching = True
     submit_button.config(text="停止查询", command=stop_fetch, fg="red")
-    
-    # 将日期从 "YYYY/M/D" 格式转换为 "YYYY-MM-DD" 格式
-    start_date_str = cal_start.get_date()
-    end_date_str = cal_end.get_date()
-    
-    # 此处处理单个数字月份和日期，例如将 "1/8/2024" 转换为 "2024-01-08"
-    start_date = datetime.strptime(start_date_str, "%m/%d/%Y").strftime("%Y-%m-%d")
-    end_date = datetime.strptime(end_date_str, "%m/%d/%Y").strftime("%Y-%m-%d")
+
+    start_date = cal_start.selection_get().strftime("%Y-%m-%d")
+    end_date = cal_end.selection_get().strftime("%Y-%m-%d")
     
     currency = entry_currency.get()
     print('开始时间: {}, 结束时间: {}'.format(start_date, end_date))
