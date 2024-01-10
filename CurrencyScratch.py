@@ -287,9 +287,9 @@ def start_fetch():
     start_date_str = cal_start.get_date()
     end_date_str = cal_end.get_date()
     
-    # 此处处理单个数字月份和日期，例如将 "2024/1/8" 转换为 "2024-01-08"
-    start_date = datetime.strptime(start_date_str, "%Y/%m/%d").strftime("%Y-%m-%d")
-    end_date = datetime.strptime(end_date_str, "%Y/%m/%d").strftime("%Y-%m-%d")
+    # 此处处理单个数字月份和日期，例如将 "1/8/2024" 转换为 "2024-01-08"
+    start_date = datetime.strptime(start_date_str, "%m/%d/%Y").strftime("%Y-%m-%d")
+    end_date = datetime.strptime(end_date_str, "%m/%d/%Y").strftime("%Y-%m-%d")
     
     currency = entry_currency.get()
     print('开始时间: {}, 结束时间: {}'.format(start_date, end_date))
