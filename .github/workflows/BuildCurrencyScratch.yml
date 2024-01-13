@@ -48,7 +48,7 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
       - name: Build macOS Application
         run: |
-          pyinstaller --windowed --onefile --hidden-import babel.numbers --osx-bundle-identifier=com.currencyScratch CurrencyScratch.py
+          pyinstaller --windowed --onefile --hidden-import babel.numbers CurrencyScratch.py
       - name: Zip the .app for distribution
         run: |
           cd dist
@@ -84,7 +84,7 @@ jobs:
           path: dist/CurrencyScratch.exe
 
   release:
-    needs: [build-linux, build-macos, build-windows]
+    needs: [ build-linux, build-macos, build-windows ]
     permissions:
       contents: write
       actions: read
