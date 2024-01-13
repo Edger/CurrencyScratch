@@ -30,6 +30,9 @@ fetch_thread = None
 # 检查文件是否存在，如果不存在则创建
 def initialize_excel(start_date, end_date, currency):
     excel_file = '{}兑人民币_{}~{}.xls'.format(currency, start_date, end_date)
+
+    if os.path.exists(excel_file):
+        os.remove(excel_file)
     
     if not os.path.exists(excel_file):
         workbook = xlwt.Workbook()  # 创建一个新的工作簿
@@ -71,7 +74,9 @@ def fetch_data(start_date, end_date, currency):
 
     initialize_excel(start_date, end_date, currency)
     row = 1
-    end_date_1030_fetched = False  # 标记是否获取到了end_date对应日期的10:30的汇率
+    previous_record_dates = None
+    start_date_1030_fetched = False  # 标记是否获取到了 start_date 对应日期的 10:30 的汇率
+    finish_fetch = False  # 是否已经完成查询
     page = 1  # 从第一页开始抓取
 
     output_text.after(0, insert_data, '查询日期：{}～{}'.format(start_date, end_date))                 
@@ -97,13 +102,15 @@ def fetch_data(start_date, end_date, currency):
 
             # 尝试获取当前页面的所有汇率记录的日期
             record_dates = html.xpath('//tr[position()>1]/td[7]/text()')
-            # print('record_dates = {}'.format(record_dates))
+            print('record_dates = {}'.format(record_dates))
 
             # 检查是否有数据
             if not record_dates:
                 print('not record_dates = true')
-                if end_date_1030_fetched:
+                if finish_fetch:
                     # 查询结束或被中断时，重置按钮状态
+                    print('已获取到最早一天的汇率数据，退出循环。')
+                    output_text.after(0, insert_data, '已获取到最早一天的汇率数据, 停止查询')
                     submit_button.after(0, stop_fetch)
                     break  # 如果已经获取到所需日期的10:30记录且当前页面为空，正常结束循环
                 else:
@@ -111,6 +118,13 @@ def fetch_data(start_date, end_date, currency):
                     # 查询结束或被中断时，重置按钮状态
                     submit_button.after(0, stop_fetch)
                     break  # 如果还没有获取到指定日期的10:30记录且当前页面为空，异常结束循环
+            elif previous_record_dates == record_dates and start_date_1030_fetched:
+                finish_fetch = True
+                print('已获取到最早一天的汇率数据，退出循环。')
+                output_text.after(0, insert_data, '已获取到最早一天的汇率数据, 停止查询')
+                # 查询结束或被中断时，重置按钮状态
+                submit_button.after(0, stop_fetch)
+                break
 
             # 打开工作表并进行初始化，避免每次循环时打开和保存
             excel_file = '{}兑人民币_{}~{}.xls'.format(currency, start_date, end_date)
@@ -126,8 +140,8 @@ def fetch_data(start_date, end_date, currency):
                     if parse_timeYmdhms(date_text).date() == parse_timeYmd(start_date).date():
                         # print('date_text = {}'.format(parse_timeYmdhms(date_text).date()))
                         # print('end_date = {}'.format(parse_timeYmd(end_date).date()))
-                        end_date_1030_fetched = True
-                        # print('end_date_1030_fetched = {}'.format(end_date_1030_fetched))
+                        start_date_1030_fetched = True
+                        # print('start_date_1030_fetched = {}'.format(start_date_1030_fetched))
                     m_n = html.xpath('//tr[{}]/td[1]/text()'.format(j))
                     s_e_p = html.xpath('//tr[{}]/td[2]/text()'.format(j))
                     c_p = html.xpath('//tr[{}]/td[3]/text()'.format(j))
@@ -146,7 +160,8 @@ def fetch_data(start_date, end_date, currency):
                         bank_count_p[0].strip() if bank_count_p else '',
                         date_text.strip() if date_text else ''
                     ) 
-                    output_text.after(0, insert_data, data)                  
+                    # output_text.after(0, insert_data, data) 
+                    print(data)                 
 
                     # 将数据写入工作表
                     worksheet.write(row, 0, ''.join(m_n).strip())
@@ -164,20 +179,23 @@ def fetch_data(start_date, end_date, currency):
             output_text.after(0, insert_data, '第 {} 页查询完成...'.format(page))
 
             # 判断是否已经获取到结束日期的10:30数据
-            if end_date_1030_fetched:
-                print('已获取到开始日期的 10:30 数据，退出循环。')
-                output_text.after(0, insert_data, '已获取到开始日期的 10:30 数据, 停止查询')
-                # 查询结束或被中断时，重置按钮状态
-                submit_button.after(0, stop_fetch)
-                break
+            # if finish_fetch:
+            #     print('已获取到开始日期的 10:30 数据，退出循环。')
+            #     output_text.after(0, insert_data, '已获取到最早一天的汇率数据, 停止查询')
+            #     # 查询结束或被中断时，重置按钮状态
+            #     submit_button.after(0, stop_fetch)
+            #     break
             
             # 随机暂停 1 到 3 秒
             time.sleep(random.uniform(1, 5))
 
+            # 更新前一页的记录日期
+            previous_record_dates = record_dates
             page += 1  # 准备获取下一页的数据
         
         except Exception as e:
             messagebox.showerror("错误", "在爬取数据时发生了异常：{}".format(e))
+            output_text.after(0, insert_data, '发生错误: {}'.format(e))
             # 查询结束或被中断时，重置按钮状态
             submit_button.after(0, stop_fetch)
             break  # 发生异常，结束循环
