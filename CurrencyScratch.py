@@ -1,31 +1,34 @@
 #! /usr/bin/env/ python
 # -*- coding:UTF-8 -*-
-# Author: Zhu Huaren
 
-import tkinter as tk
-from tkinter import ttk
-from tkinter import messagebox, filedialog
-from tkinter import scrolledtext  # 导入滚动文本框的库
-from tkcalendar import Calendar
-import requests
-from lxml import etree
-import xlrd
-from xlutils.copy import copy
-import xlwt
-from datetime import datetime
 import os
-import time
 import random
 import threading
+import time
+import tkinter as tk
+from datetime import datetime
+from tkinter import messagebox
+# 导入滚动文本框的库
+from tkinter import scrolledtext
+from tkinter import ttk
+
+import requests
+import xlrd
+import xlwt
+from lxml import etree
+from tkcalendar import Calendar
+from xlutils.copy import copy
 
 # 设置请求头模拟浏览器行为
 headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
+                  'Chrome/58.0.3029.110 Safari/537.3'
 }
 
 # 控制查询过程的标志
 is_fetching = False
 fetch_thread = None
+
 
 # 检查文件是否存在，如果不存在则创建
 def initialize_excel(start_date, end_date, currency):
@@ -33,7 +36,7 @@ def initialize_excel(start_date, end_date, currency):
 
     if os.path.exists(excel_file):
         os.remove(excel_file)
-    
+
     if not os.path.exists(excel_file):
         workbook = xlwt.Workbook()  # 创建一个新的工作簿
         worksheet = workbook.add_sheet('Sheet1')  # 添加一个工作表
@@ -54,11 +57,14 @@ def initialize_excel(start_date, end_date, currency):
             worksheet.write(0, col, title)
         workbook.save(excel_file)
 
-def parse_timeYmdhms(time_str):
+
+def parse_time_ymdhms(time_str):
     return datetime.strptime(time_str.strip(), '%Y.%m.%d %H:%M:%S')
 
-def parse_timeYmd(time_str):
+
+def parse_time_ymd(time_str):
     return datetime.strptime(time_str.strip(), '%Y-%m-%d')
+
 
 # 用于将字符串转换为浮点数的辅助函数
 def to_float(s):
@@ -67,19 +73,19 @@ def to_float(s):
     except ValueError:
         return 0  # 或者你可以选择返回None或者其他合适的值
 
-# row = 1  # 从第二行开始写入数据
 
 def fetch_data(start_date, end_date, currency):
     global is_fetching
 
     initialize_excel(start_date, end_date, currency)
+    excel_file = '{}兑人民币_{}~{}.xls'.format(currency, start_date, end_date)
     row = 1
     previous_record_dates = None
     start_date_1030_fetched = False  # 标记是否获取到了 start_date 对应日期的 10:30 的汇率
     finish_fetch = False  # 是否已经完成查询
     page = 1  # 从第一页开始抓取
 
-    output_text.after(0, insert_data, '查询日期：{}～{}'.format(start_date, end_date))                 
+    output_text.after(0, insert_data, '查询日期：{}～{}'.format(start_date, end_date))
 
     while is_fetching:
         # 如果 is_fetching 变为 False，停止查询操作
@@ -88,7 +94,7 @@ def fetch_data(start_date, end_date, currency):
 
         try:
             print('第{}页爬取开始...'.format(page))
-            output_text.after(0, insert_data, '第 {} 页查询开始...'.format(page))                
+            output_text.after(0, insert_data, '第 {} 页查询开始...'.format(page))
 
             form_data = {
                 'erectDate': start_date,
@@ -119,7 +125,6 @@ def fetch_data(start_date, end_date, currency):
                     submit_button.after(0, stop_fetch)
                     break  # 如果还没有获取到指定日期的10:30记录且当前页面为空，异常结束循环
             elif previous_record_dates == record_dates and start_date_1030_fetched:
-                finish_fetch = True
                 print('已获取到最早一天的汇率数据，退出循环。')
                 output_text.after(0, insert_data, '已获取到最早一天的汇率数据, 停止查询')
                 # 查询结束或被中断时，重置按钮状态
@@ -127,7 +132,6 @@ def fetch_data(start_date, end_date, currency):
                 break
 
             # 打开工作表并进行初始化，避免每次循环时打开和保存
-            excel_file = '{}兑人民币_{}~{}.xls'.format(currency, start_date, end_date)
             workbook = xlrd.open_workbook(excel_file)
             workbook_copy = copy(workbook)
             worksheet = workbook_copy.get_sheet(0)
@@ -137,11 +141,11 @@ def fetch_data(start_date, end_date, currency):
                 date_text = ''.join(date).strip()
                 # 检查时间是否为10:30:00
                 if date_text.endswith('10:30:00'):
-                    if parse_timeYmdhms(date_text).date() == parse_timeYmd(start_date).date():
-                        # print('date_text = {}'.format(parse_timeYmdhms(date_text).date()))
-                        # print('end_date = {}'.format(parse_timeYmd(end_date).date()))
+                    if parse_time_ymdhms(date_text).date() == parse_time_ymd(start_date).date():
+                        # print('date_text = {}'.format(parse_time_ymdhms(date_text).date()))
+                        # print('end_date = {}'.format(parse_time_ymd(end_date).date()))
                         start_date_1030_fetched = True
-                        # print('start_date_1030_fetched = {}'.format(start_date_1030_fetched))
+                        print('start_date_1030_fetched = {}'.format(start_date_1030_fetched))
                     m_n = html.xpath('//tr[{}]/td[1]/text()'.format(j))
                     s_e_p = html.xpath('//tr[{}]/td[2]/text()'.format(j))
                     c_p = html.xpath('//tr[{}]/td[3]/text()'.format(j))
@@ -159,9 +163,9 @@ def fetch_data(start_date, end_date, currency):
                         c_s[0].strip() if c_s else '',
                         bank_count_p[0].strip() if bank_count_p else '',
                         date_text.strip() if date_text else ''
-                    ) 
+                    )
                     # output_text.after(0, insert_data, data) 
-                    print(data)                 
+                    print(data)
 
                     # 将数据写入工作表
                     worksheet.write(row, 0, ''.join(m_n).strip())
@@ -169,9 +173,9 @@ def fetch_data(start_date, end_date, currency):
                     worksheet.write(row, 2, to_float(''.join(c_p).strip()))
                     worksheet.write(row, 3, to_float(''.join(s_e_sp).strip()))
                     worksheet.write(row, 4, to_float(''.join(c_s).strip()))
-                    worksheet.write(row, 5, to_float(''.join(bank_count_p).strip())) 
+                    worksheet.write(row, 5, to_float(''.join(bank_count_p).strip()))
                     worksheet.write(row, 6, ''.join(date).strip())
-                    
+
                     row += 1  # 只有写入数据后才递增行号
 
             # 循环结束后保存工作表
@@ -185,14 +189,14 @@ def fetch_data(start_date, end_date, currency):
             #     # 查询结束或被中断时，重置按钮状态
             #     submit_button.after(0, stop_fetch)
             #     break
-            
+
             # 随机暂停 1 到 3 秒
             time.sleep(random.uniform(1, 5))
 
             # 更新前一页的记录日期
             previous_record_dates = record_dates
             page += 1  # 准备获取下一页的数据
-        
+
         except Exception as e:
             messagebox.showerror("错误", "在爬取数据时发生了异常：{}".format(e))
             output_text.after(0, insert_data, '发生错误: {}'.format(e))
@@ -213,10 +217,10 @@ def fetch_data(start_date, end_date, currency):
 
     # 去除重复并排序
     # 注意这里我们使用了一个字典来确保同一天的数据只保留一个
-    data_dict = {parse_timeYmdhms(row[6]).date(): row for row in data}
+    data_dict = {parse_time_ymdhms(row[6]).date(): row for row in data}
     unique_data = list(data_dict.values())
 
-    sorted_data = sorted(unique_data, key=lambda x: parse_timeYmdhms(x[6]))  # 按时间排序
+    sorted_data = sorted(unique_data, key=lambda x: parse_time_ymdhms(x[6]))  # 按时间排序
 
     # 写入新的Excel文件中
     new_workbook = xlwt.Workbook()
@@ -238,6 +242,7 @@ def fetch_data(start_date, end_date, currency):
     print('数据排序和去重完成，已保存到文件 {}'.format(sorted_excel_file))
     output_text.after(0, insert_data, '数据排序和去重完成，已保存到文件【{}】'.format(sorted_excel_file))
 
+
 # 创建图形界面
 root = tk.Tk()
 root.title("外币兑人民币汇率查询工具")
@@ -251,7 +256,9 @@ container_frame.pack()
 
 # 开始日期选择器容器
 start_frame = tk.Frame(container_frame)
-start_frame.pack(side=tk.LEFT, padx=10)  # side=tk.LEFT 用于横向并排，padx用于添加水平间距
+
+# side=tk.LEFT 用于横向并排，padx 用于添加水平间距
+start_frame.pack(side=tk.LEFT, padx=10)
 
 # 开始日期标签
 label_start = tk.Label(start_frame, text="开始日期:")
@@ -259,15 +266,17 @@ label_start.pack(anchor="center")
 
 # 开始日期日历控件
 cal_start = Calendar(
-    start_frame, 
-    selectmode='day', 
-    year=datetime.now().year, 
-    month=datetime.now().month, 
-    day=datetime.now().day, 
+    start_frame,
+    selectmode='day',
+    year=datetime.now().year,
+    month=datetime.now().month,
+    day=datetime.now().day,
     showweeknumbers=False,
     firstweekday='sunday'
-    )
-cal_start.pack(pady=(0, 10))  # pady用于在日历控件下方添加一些空间
+)
+
+# pady 用于在日历控件下方添加一些空间
+cal_start.pack(pady=(0, 10))
 
 # 结束日期选择器容器
 end_frame = tk.Frame(container_frame)
@@ -279,14 +288,14 @@ label_end.pack(anchor="center")
 
 # 结束日期日历控件
 cal_end = Calendar(
-    end_frame, 
-    selectmode='day', 
-    year=datetime.now().year, 
-    month=datetime.now().month, 
-    day=datetime.now().day, 
+    end_frame,
+    selectmode='day',
+    year=datetime.now().year,
+    month=datetime.now().month,
+    day=datetime.now().day,
     showweeknumbers=False,
     firstweekday='sunday'
-    )
+)
 cal_end.pack(pady=(0, 10))
 
 # 货币名称输入
@@ -294,6 +303,7 @@ label_currency = tk.Label(root, text="外币名称:")
 label_currency.pack(pady=(10, 0))
 entry_currency = tk.Entry(root)
 entry_currency.pack(pady=(0, 10))
+
 
 # 提交按钮的回调函数
 def start_fetch():
@@ -303,24 +313,26 @@ def start_fetch():
 
     start_date = cal_start.selection_get().strftime("%Y-%m-%d")
     end_date = cal_end.selection_get().strftime("%Y-%m-%d")
-    
+
     currency = entry_currency.get()
     print('开始时间: {}, 结束时间: {}'.format(start_date, end_date))
-    
+
     if datetime.strptime(start_date, "%Y-%m-%d") > datetime.strptime(end_date, "%Y-%m-%d"):
         messagebox.showerror("错误", "开始日期必须早于结束日期。")
         return
-    
+
     # 运行爬取数据的函数
     # 创建并启动一个线程来运行耗时的操作
     threading.Thread(target=fetch_data, args=(start_date, end_date, currency)).start()
     # fetch_data(start_date, end_date, currency)
+
 
 # 停止查询的函数
 def stop_fetch():
     global is_fetching
     is_fetching = False
     submit_button.config(text="开始查询", command=start_fetch, fg="black")
+
 
 # 初始状态为开始查询
 submit_button = tk.Button(root, text="开始查询", command=start_fetch)
@@ -333,11 +345,13 @@ output_frame.pack(pady=10)
 output_text = scrolledtext.ScrolledText(output_frame, wrap=tk.WORD, height=30, width=100)
 output_text.pack()
 
+
 # 当需要向GUI组件插入数据时，需要使用线程安全的方法
 def insert_data(data):
     if output_text:
         output_text.insert(tk.END, data + '\n')  # 将数据插入到输出框
-        output_text.see(tk.END)          # 滚动到最新的一条数据
+        output_text.see(tk.END)  # 滚动到最新的一条数据
+
 
 # 运行主循环前最大化窗口
 # root.state('zoomed')
